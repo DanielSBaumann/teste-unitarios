@@ -6,21 +6,33 @@ import br.ce.wcaquino.entidades.Usuario;
 import br.ce.wcaquino.exceptions.FilmeSemEstoqueException;
 import br.ce.wcaquino.exceptions.LocadoraException;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ErrorCollector;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
+import static br.ce.wcaquino.builder.FilmeBuilder.umFilme;
+import static br.ce.wcaquino.matchers.MatchersProprios.*;
+import static br.ce.wcaquino.utils.DataUtils.verificarDiaSemana;
 import static java.util.Arrays.asList;
+import static java.util.Calendar.SATURDAY;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assume.assumeTrue;
 
 @RunWith(Parameterized.class)
 public class CalculoValorLocacaoTest {
 
     private LocacaoService service;
+
+    @Rule
+    public ErrorCollector error = new ErrorCollector();
 
     @Before
     public void setup() {
@@ -36,13 +48,13 @@ public class CalculoValorLocacaoTest {
     @Parameterized.Parameter(value = 2)
     public String cenario;
 
-    private static Filme filme1 = new Filme("Filme 1", 2, 4d);
-    private static Filme filme2 = new Filme("Filme 2", 2, 4d);
-    private static Filme filme3 = new Filme("Filme 3", 2, 4d);
-    private static Filme filme4 = new Filme("Filme 4", 2, 4d);
-    private static Filme filme5 = new Filme("Filme 5", 2, 4d);
-    private static Filme filme6 = new Filme("Filme 6", 2, 4d);
-    private static Filme filme7 = new Filme("Filme 7", 2, 4d);
+    private static Filme filme1 = umFilme().agora();
+    private static Filme filme2 = umFilme().agora();
+    private static Filme filme3 = umFilme().agora();
+    private static Filme filme4 = umFilme().agora();
+    private static Filme filme5 = umFilme().agora();
+    private static Filme filme6 = umFilme().agora();
+    private static Filme filme7 = umFilme().agora();
 
     @Parameterized.Parameters(name = "{2}")
     public static Collection<Object[]> getParameters() {
@@ -70,8 +82,51 @@ public class CalculoValorLocacaoTest {
         assertThat(resultado.getValor(), is(valorLocacao));
     }
 
-    @Test
-    public void print() {
-        System.out.println(valorLocacao);
-    }
+//    @Test
+//    public void deveDevolverNaSegundaAoAlugarNoSabado() throws FilmeSemEstoqueException, LocadoraException {
+//
+//        assumeTrue(verificarDiaSemana(new Date(), SATURDAY));
+//
+//        //cenario
+//        Usuario usuario = new Usuario("Usuario 1");
+//        List<Filme> filmes = asList(new Filme("Filme 1", 2, 5.0));
+//
+//        //acao
+//        Locacao retorno = service.alugarFilme(usuario, filmes);
+//        assertThat(retorno.getDataRetorno(), caiNumaSegunda());
+//    }
+
+//    /**
+//     * Elegante
+//     */
+//    @Test(expected = FilmeSemEstoqueException.class)
+//    public void naoDeveAlugarFilmeSemEstoque() throws Exception {
+//
+//        //  cenario
+//
+//        Usuario usuario = new Usuario("Daniel Baumann");
+//        List<Filme> filmes = asList(new Filme("It a coisa", 0, 7.5));
+//
+//        //  ação
+//        Locacao locacao = service.alugarFilme(usuario, filmes);
+//
+//        //  verificação
+//        error
+//                .checkThat(
+//                        locacao
+//                                .getValor(),
+//                        is(equalTo(7.5)));
+//
+//        /**
+//         * Refactor
+//         */
+//        error
+//                .checkThat(locacao.getDataLocacao(), hoje());
+//
+//        /**
+//         * Refactor
+//         */
+//        error
+//                .checkThat(locacao.getDataLocacao(), hojeComDiferencaDias(1));
+//    }
 }
