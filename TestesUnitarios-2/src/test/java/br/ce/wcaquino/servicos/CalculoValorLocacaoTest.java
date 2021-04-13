@@ -1,5 +1,6 @@
 package br.ce.wcaquino.servicos;
 
+import br.ce.wcaquino.daos.LocacaoDAO;
 import br.ce.wcaquino.entidades.Filme;
 import br.ce.wcaquino.entidades.Locacao;
 import br.ce.wcaquino.entidades.Usuario;
@@ -13,23 +14,22 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 
 import static br.ce.wcaquino.builder.FilmeBuilder.umFilme;
-import static br.ce.wcaquino.matchers.MatchersProprios.*;
-import static br.ce.wcaquino.utils.DataUtils.verificarDiaSemana;
 import static java.util.Arrays.asList;
-import static java.util.Calendar.SATURDAY;
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assume.assumeTrue;
+import static org.mockito.Mockito.mock;
 
 @RunWith(Parameterized.class)
 public class CalculoValorLocacaoTest {
 
     private LocacaoService service;
+
+    private SPCService spc;
+
+    private LocacaoDAO dao;
 
     @Rule
     public ErrorCollector error = new ErrorCollector();
@@ -37,6 +37,10 @@ public class CalculoValorLocacaoTest {
     @Before
     public void setup() {
         service = new LocacaoService();
+        dao = mock(LocacaoDAO.class);
+        service.setLocacaoDAO(dao);
+        spc = mock(SPCService.class);
+        service.setSPCService(spc);
     }
 
     @Parameterized.Parameter
