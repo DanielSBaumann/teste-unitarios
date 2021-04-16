@@ -1,6 +1,5 @@
 package br.ce.wcaquino.servicos;
 
-import br.ce.wcaquino.builder.LocacaoBuilder;
 import br.ce.wcaquino.daos.LocacaoDAO;
 import br.ce.wcaquino.entidades.Filme;
 import br.ce.wcaquino.entidades.Locacao;
@@ -12,7 +11,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
 import org.junit.rules.ExpectedException;
-import org.mockito.Mockito;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 
 import java.util.Date;
 import java.util.List;
@@ -32,15 +33,20 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.Mockito.*;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 public class LocacaoServiceTest {
 
+    @InjectMocks
     private LocacaoService service;
 
+    @Mock
     private SPCService spc;
 
+    @Mock
     private LocacaoDAO dao;
 
+    @Mock
     private EmailService emailService;
 
     @Rule
@@ -51,13 +57,7 @@ public class LocacaoServiceTest {
 
     @Before
     public void setup() {
-        service = new LocacaoService();
-        dao = mock(LocacaoDAO.class);
-        service.setLocacaoDAO(dao);
-        spc = mock(SPCService.class);
-        service.setSPCService(spc);
-        emailService = mock(EmailService.class);
-        service.setEmailService(emailService);
+        initMocks(this);
     }
 
     @Test
@@ -185,7 +185,7 @@ public class LocacaoServiceTest {
     }
 
     @Test
-    public void naoDeveALugarFilmeNegativadoSPC() throws FilmeSemEstoqueException {
+    public void naoDeveALugarFilmeNegativadoSPC() throws Exception {
         //cenario
         Usuario usuario = umUsuario()
                 .agora();
@@ -263,6 +263,65 @@ public class LocacaoServiceTest {
         verifyNoMoreInteractions(emailService);
 
         verifyZeroInteractions(spc);
+    }
+
+    @Test
+    public void deveTratarErroNoSPC() throws Exception {
+        //cenario
+        Usuario usuario = umUsuario()
+                .agora();
+
+        List<Filme> filmes = asList(umFilme()
+                .agora());
+
+        when(spc.possuiNegativacao(usuario))
+                .thenThrow(new Exception("Falha catastrófica"));
+
+        exception
+                .expect(LocadoraException.class);
+
+        exception
+                .expectMessage("Problemas com SPC, tente novamente");
+
+        //acao
+        service.alugarFilme(usuario, filmes);
+
+        //verificacao
+
+    }
+
+    @Test
+    public void deveProrrogarUmaLocacao() {
+        //cenario
+        Locacao locacao = umLocacao().agora();
+
+        //acao
+        service.prorrogarLocacao(locacao, 3);
+
+        //verificacao
+        ArgumentCaptor<Locacao> argCapt = ArgumentCaptor
+                .forClass(Locacao.class);
+
+        verify(dao)
+                .salvar(argCapt.capture());
+
+        Locacao locacaoRetornada = argCapt
+                .getValue();
+
+        error.checkThat(
+                locacaoRetornada.getValor(),
+                is(12.0)
+        );
+
+        error.checkThat(
+                locacaoRetornada.getDataLocacao(),
+                hoje()
+        );
+
+        error.checkThat(
+                locacaoRetornada.getDataRetorno(),
+                hojeComDiferencaDias(3)
+        );
     }
 
 }

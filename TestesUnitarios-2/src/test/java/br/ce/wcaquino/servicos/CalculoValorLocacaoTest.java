@@ -12,6 +12,8 @@ import org.junit.Test;
 import org.junit.rules.ErrorCollector;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 
 import java.util.Collection;
 import java.util.List;
@@ -21,14 +23,18 @@ import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 @RunWith(Parameterized.class)
 public class CalculoValorLocacaoTest {
 
+    @InjectMocks
     private LocacaoService service;
 
+    @Mock
     private SPCService spc;
 
+    @Mock
     private LocacaoDAO dao;
 
     @Rule
@@ -36,11 +42,7 @@ public class CalculoValorLocacaoTest {
 
     @Before
     public void setup() {
-        service = new LocacaoService();
-        dao = mock(LocacaoDAO.class);
-        service.setLocacaoDAO(dao);
-        spc = mock(SPCService.class);
-        service.setSPCService(spc);
+        initMocks(this);
     }
 
     @Parameterized.Parameter

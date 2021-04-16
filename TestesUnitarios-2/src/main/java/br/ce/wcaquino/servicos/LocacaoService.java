@@ -6,13 +6,13 @@ import br.ce.wcaquino.entidades.Locacao;
 import br.ce.wcaquino.entidades.Usuario;
 import br.ce.wcaquino.exceptions.FilmeSemEstoqueException;
 import br.ce.wcaquino.exceptions.LocadoraException;
+import br.ce.wcaquino.utils.DataUtils;
 
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-import static br.ce.wcaquino.utils.DataUtils.adicionarDias;
-import static br.ce.wcaquino.utils.DataUtils.verificarDiaSemana;
+import static br.ce.wcaquino.utils.DataUtils.*;
 
 public class LocacaoService {
 
@@ -36,7 +36,16 @@ public class LocacaoService {
             }
         }
 
-        if (spc.possuiNegativacao(usuario)) {
+        boolean negativado;
+
+        try {
+            negativado = spc
+                    .possuiNegativacao(usuario);
+        } catch (Exception e) {
+            throw new LocadoraException("Problemas com SPC, tente novamente");
+        }
+
+        if (negativado) {
             throw new LocadoraException("Usuário negativado!");
         }
 
@@ -94,16 +103,14 @@ public class LocacaoService {
         });
     }
 
-    public void setLocacaoDAO(LocacaoDAO dao) {
-        this.dao = dao;
-    }
-
-    public void setSPCService(SPCService spc) {
-        this.spc = spc;
-    }
-
-    public void setEmailService(EmailService emailService) {
-        this.emailService = emailService;
+    public void prorrogarLocacao(Locacao locacao, int dias) {
+        Locacao novaLocacao = new Locacao();
+        novaLocacao.setUsuario(locacao.getUsuario());
+        novaLocacao.setFilmes(locacao.getFilmes());
+        novaLocacao.setDataLocacao(new Date());
+        novaLocacao.setDataRetorno(obterDataComDiferencaDias(dias));
+        novaLocacao.setValor(locacao.getValor() * dias);
+        dao.salvar(novaLocacao);
     }
 }
 
