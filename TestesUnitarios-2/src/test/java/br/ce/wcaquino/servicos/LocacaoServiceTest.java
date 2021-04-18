@@ -11,9 +11,12 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
 import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.Date;
 import java.util.List;
@@ -25,16 +28,16 @@ import static br.ce.wcaquino.builder.UsuarioBuilder.umUsuario;
 import static br.ce.wcaquino.matchers.MatchersProprios.*;
 import static br.ce.wcaquino.utils.DataUtils.*;
 import static java.util.Arrays.asList;
-import static java.util.Calendar.SATURDAY;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeTrue;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
 
+@RunWith((PowerMockRunner.class))
+@PrepareForTest(LocacaoService.class)
 public class LocacaoServiceTest {
 
     @InjectMocks
@@ -63,7 +66,7 @@ public class LocacaoServiceTest {
     @Test
     public void deveAlugarFilme() throws Exception {
 
-        assumeFalse(verificarDiaSemana(new Date(), SATURDAY));
+//        assumeFalse(verificarDiaSemana(new Date(), SATURDAY));
 
         //  cenario
         Usuario usuario = umUsuario()
@@ -169,15 +172,19 @@ public class LocacaoServiceTest {
     }
 
     @Test
-    public void deveDevolverNaSegundaAoAlugarNoSabado() throws FilmeSemEstoqueException, LocadoraException {
+    public void deveDevolverNaSegundaAoAlugarNoSabado() throws Exception {
 
-        assumeTrue(verificarDiaSemana(new Date(), SATURDAY));
+//        assumeTrue(verificarDiaSemana(new Date(), SATURDAY));
 
         //cenario
         Usuario usuario = umUsuario()
                 .agora();
         List<Filme> filmes = asList(umFilme()
                 .agora());
+
+        whenNew(Date.class)
+                .withNoArguments()
+                .thenReturn(obterData(29, 4, 2017));
 
         //acao
         Locacao retorno = service.alugarFilme(usuario, filmes);
