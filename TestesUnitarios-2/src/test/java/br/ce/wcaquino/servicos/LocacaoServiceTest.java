@@ -6,6 +6,7 @@ import br.ce.wcaquino.entidades.Locacao;
 import br.ce.wcaquino.entidades.Usuario;
 import br.ce.wcaquino.exceptions.FilmeSemEstoqueException;
 import br.ce.wcaquino.exceptions.LocadoraException;
+import br.ce.wcaquino.runners.ParallelRunner;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -15,10 +16,9 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.Spy;
 
-import java.util.Date;
+import java.lang.reflect.Method;
 import java.util.List;
 
 import static br.ce.wcaquino.builder.FilmeBuilder.filmeSemEstoque;
@@ -26,7 +26,8 @@ import static br.ce.wcaquino.builder.FilmeBuilder.umFilme;
 import static br.ce.wcaquino.builder.LocacaoBuilder.umLocacao;
 import static br.ce.wcaquino.builder.UsuarioBuilder.umUsuario;
 import static br.ce.wcaquino.matchers.MatchersProprios.*;
-import static br.ce.wcaquino.utils.DataUtils.*;
+import static br.ce.wcaquino.utils.DataUtils.isMesmaData;
+import static br.ce.wcaquino.utils.DataUtils.obterData;
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
@@ -34,13 +35,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-@RunWith((PowerMockRunner.class))
-@PrepareForTest(LocacaoService.class)
+@RunWith(ParallelRunner.class)
 public class LocacaoServiceTest {
 
     @InjectMocks
+    @Spy
     private LocacaoService service;
 
     @Mock
@@ -66,8 +66,6 @@ public class LocacaoServiceTest {
     @Test
     public void deveAlugarFilme() throws Exception {
 
-//        assumeFalse(verificarDiaSemana(new Date(), SATURDAY));
-
         //  cenario
         Usuario usuario = umUsuario()
                 .agora();
@@ -76,27 +74,32 @@ public class LocacaoServiceTest {
                 .comValor(5.0)
                 .agora());
 
+        doReturn(obterData(28, 4, 2017))
+                .when(service).obterData();
+
         //  ação
         Locacao locacao = service.alugarFilme(usuario, filmes);
 
         //  verificação
         error
                 .checkThat(
-                        locacao
-                                .getValor(),
-                        is(equalTo(5.0)));
+                        locacao.getValor(),
+                        is(equalTo(5.0))
+                );
 
         error
                 .checkThat(isMesmaData(
                         locacao.getDataLocacao(),
-                        new Date()),
-                        is(true));
+                        obterData(28, 4, 2017)),
+                        is(true)
+                );
 
         error
                 .checkThat(isMesmaData(
                         locacao.getDataRetorno(),
-                        obterDataComDiferencaDias(1)),
-                        is(true));
+                        obterData(29, 4, 2017)),
+                        is(true)
+                );
     }
 
     /**
@@ -173,18 +176,14 @@ public class LocacaoServiceTest {
 
     @Test
     public void deveDevolverNaSegundaAoAlugarNoSabado() throws Exception {
-
-//        assumeTrue(verificarDiaSemana(new Date(), SATURDAY));
-
         //cenario
         Usuario usuario = umUsuario()
                 .agora();
         List<Filme> filmes = asList(umFilme()
                 .agora());
 
-        whenNew(Date.class)
-                .withNoArguments()
-                .thenReturn(obterData(29, 4, 2017));
+        doReturn(obterData(29, 4, 2017))
+                .when(service).obterData();
 
         //acao
         Locacao retorno = service.alugarFilme(usuario, filmes);
@@ -207,7 +206,7 @@ public class LocacaoServiceTest {
             service.alugarFilme(usuario, filmes);
             fail();
         } catch (LocadoraException e) {
-            assertThat(e.getMessage(), is("Usuário negativado!"));
+            assertThat(e.getMessage(), is("Usuario negativado!"));
         }
 
         //verificacao
@@ -329,6 +328,29 @@ public class LocacaoServiceTest {
                 locacaoRetornada.getDataRetorno(),
                 hojeComDiferencaDias(3)
         );
+    }
+
+    @Test
+    public void deveCalcularValorLocacao() throws Exception {
+        //cenario
+        Usuario usuario = umUsuario()
+                .agora();
+
+        List<Filme> filmes = asList(umFilme()
+                .agora());
+
+        //acao
+
+        Class<LocacaoService> clazz = LocacaoService.class;
+        Method metodo = clazz.getDeclaredMethod("calcularValorLocacao", List.class);
+        metodo.setAccessible(true);
+
+        Double valor = (Double) metodo
+                .invoke(service, filmes);
+
+        //verificacao
+        assertThat(valor, is(4.0));
+
     }
 
 }

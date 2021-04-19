@@ -45,40 +45,23 @@ public class LocacaoService {
         }
 
         if (negativado) {
-            throw new LocadoraException("Usuário negativado!");
+            throw new LocadoraException("Usuario negativado!");
         }
 
         Locacao locacao = new Locacao();
-        locacao.setFilmes(filmes);
-        locacao.setUsuario(usuario);
-        locacao.setDataLocacao(new Date());
+        locacao
+                .setFilmes(filmes);
+        locacao
+                .setUsuario(usuario);
+        locacao
+                .setDataLocacao(obterData());
 
-        Double valorTotal = 0d;
-        for (int i = 0; i < filmes.size(); i++) {
-            Filme filme = filmes.get(i);
-            Double valorFilme = filme.getPrecoLocacao();
+        locacao
+                .setValor(calcularValorLocacao(filmes));
 
-            switch (i) {
-                case 2:
-                    valorFilme *= 0.75;
-                    break;
-                case 3:
-                    valorFilme *= 0.5;
-                    break;
-                case 4:
-                    valorFilme *= 0.25;
-                    break;
-                case 5:
-                    valorFilme = 0d;
-                    break;
-            }
-
-            valorTotal += valorFilme;
-        }
-        locacao.setValor(valorTotal);
 
         //Entrega no dia seguinte
-        Date dataEntrega = new Date();
+        Date dataEntrega = obterData();
         dataEntrega = adicionarDias(dataEntrega, 1);
         if (verificarDiaSemana(dataEntrega, Calendar.SUNDAY)) {
             dataEntrega = adicionarDias(dataEntrega, 1);
@@ -110,6 +93,37 @@ public class LocacaoService {
         novaLocacao.setDataRetorno(obterDataComDiferencaDias(dias));
         novaLocacao.setValor(locacao.getValor() * dias);
         dao.salvar(novaLocacao);
+    }
+
+    private Double calcularValorLocacao(List<Filme> filmes) {
+        System.out.println("Estou calculando...");
+        Double valorTotal = 0d;
+        for (int i = 0; i < filmes.size(); i++) {
+            Filme filme = filmes.get(i);
+            Double valorFilme = filme.getPrecoLocacao();
+
+            switch (i) {
+                case 2:
+                    valorFilme *= 0.75;
+                    break;
+                case 3:
+                    valorFilme *= 0.5;
+                    break;
+                case 4:
+                    valorFilme *= 0.25;
+                    break;
+                case 5:
+                    valorFilme = 0d;
+                    break;
+            }
+
+            valorTotal += valorFilme;
+        }
+        return valorTotal;
+    }
+
+    protected Date obterData() {
+        return new Date();
     }
 }
 
